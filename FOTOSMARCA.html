@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preparador de Fotografias | André Silva</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #101010;
+    color: #eee;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+header {
+    background: #181818;
+    border-bottom: 1px solid #333;
+    padding: 25px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 25px;
+}
+
+header p {
+    margin: 8px 0 0;
+    color: #999;
+}
+
+.container {
+    max-width: 1300px;
+    margin: auto;
+    padding: 25px;
+}
+
+.card {
+    background: #191919;
+    border: 1px solid #303030;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin-top: 0;
+    font-size: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 7px;
+    color: #bbb;
+    font-size: 14px;
+}
+
+input,
+select,
+button {
+    font: inherit;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+    width: 100%;
+    background: #101010;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 7px;
+    padding: 11px;
+}
+
+input[type="range"] {
+    width: 100%;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.dropzone {
+    border: 2px dashed #555;
+    border-radius: 12px;
+    padding: 45px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: .2s;
+    background: #151515;
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+    border-color: #d4af37;
+    background: #1d1d1d;
+}
+
+.dropzone strong {
+    display: block;
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.dropzone span {
+    color: #999;
+}
+
+button {
+    border: 0;
+    border-radius: 7px;
+    padding: 11px 17px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-primary {
+    background: #d4af37;
+    color: #111;
+}
+
+.btn-secondary {
+    background: #303030;
+    color: white;
+}
+
+.btn-danger {
+    background: #8f2525;
+    color: white;
+}
+
+button:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.info {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.number-preview {
+    background: #101010;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 12px;
+    color: #ccc;
+}
+
+.number-preview strong {
+    color: #d4af37;
+}
+
+.saved-number {
+    color: #72c472;
+    font-size: 13px;
+    margin-top: 7px;
+}
+
+.status {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 7px;
+    background: #101010;
+    color: #bbb;
+    line-height: 1.5;
+}
+
+.progress-container {
+    margin-top: 15px;
+    display: none;
+}
+
+.progress-bar {
+    height: 12px;
+    background: #303030;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress {
+    width: 0%;
+    height: 100%;
+    background: #d4af37;
+    transition: width .15s;
+}
+
+.photo-count {
+    color: #d4af37;
+    font-weight: bold;
+}
+
+.preview-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.photo-item {
+    position: relative;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.photo-item img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+}
+
+.photo-info {
+    padding: 10px;
+    font-size: 13px;
+}
+
+.photo-info .number {
+    color: #d4af37;
+    font-weight: bold;
+}
+
+.photo-info .filename {
+    color: #999;
+    word-break: break-all;
+    margin-top: 4px;
+}
+
+.remove-photo {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(0,0,0,.85);
+    color: white;
+    font-size: 21px;
+    line-height: 32px;
+    z-index: 5;
+}
+
+.remove-photo:hover {
+    background: #a52c2c;
+}
+
+.preview-watermark {
+    width: 100%;
+    max-width: 1000px;
+    margin: auto;
+    background: #0d0d0d;
+    border: 1px solid #333;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.preview-watermark canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.preview-placeholder {
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    text-align: center;
+    padding: 30px;
+}
+
+.download-ready {
+    color: #72c472;
+    font-weight: bold;
+}
+
+@media (max-width: 700px) {
+    .grid,
+    .grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .container {
+        padding: 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Preparador de Fotografias</h1>
+    <p>Originais + marca de água + numeração automática</p>
+</header>
+
+<div class="container">
+
+    <!-- NUMERAÇÃO -->
+
+    <div class="card">
+
+        <h2>1. Numeração</h2>
+
+        <div class="grid">
+
+            <div>
+                <label for="ultimoNumero">
+                    Último número utilizado
+                </label>
+
+                <input
+                    type="number"
+                    id="ultimoNumero"
+                    min="0"
+                    value="0"
+                    onchange="guardarNumeroManual()"
+                >
+
+                <div class="saved-number">
+                    Guardado neste navegador
+                </div>
+            </div>
+
+            <div>
+                <label for="digitos">
+                    Número mínimo de dígitos
+                </label>
+
+                <select
+                    id="digitos"
+                    onchange="atualizarTudo()"
+                >
+                    <option value="1">1 dígito</option>
+                    <option value="2">2 dígitos</option>
+                    <option value="3" selected>3 dígitos</option>
+                    <option value="4">4 dígitos</option>
+                    <option value="5">5 dígitos</option>
+                    <option value="6">6 dígitos</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div
+            class="number-preview"
+            id="previewNumeracao"
+        ></div>
+
+        <p class="info">
+            O último número só é atualizado depois de o lote ser
+            processado com sucesso.
+        </p>
+
+    </div>
+
+
+    <!-- FOTOGRAFIAS -->
+
+    <div class="card">
+
+        <h2>2. Fotografias</h2>
+
+        <div
+            class="dropzone"
+            id="dropzone"
+        >
+
+            <strong>
+                Arrasta as fotografias para aqui
+            </strong>
+
+            <span>
+                ou clica para escolher várias fotografias
+            </span>
+
+            <input
+                type="file"
+                id="fileInput"
+                accept="image/*"
+                multiple
+                hidden
+            >
+
+        </div>
+
+        <div style="margin-top:15px;">
+
+            Fotografias selecionadas:
+            <span
+                class="photo-count"
+                id="photoCount"
+            >
+                0
+            </span>
+
+        </div>
+
+        <div
+            class="preview-list"
+            id="previewList"
+        ></div>
+
+    </div>
+
+
+    <!-- MARCA DE ÁGUA -->
+
+    <div class="card">
+
+        <h2>3. Marca de água</h2>
+
+        <div class="grid">
+
+            <div>
+
+                <label for="watermarkText">
+                    Texto
+                </label>
+
+                <input
+                    type="text"
+                    id="watermarkText"
+                    value="© André Silva Photography"
+                >
+
+            </div>
+
+            <div>
+
+                <label for="watermarkMode">
+                    Tipo
+                </label>
+
+                <select id="watermarkMode">
+
+                    <option value="repeat">
+                        Repetida
+                    </option>
+
+                    <option value="center">
+                        Centro
+                    </option>
+
+                    <option value="diagonal">
+                        Diagonal
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="grid-3"
+            style="margin-top:15px;"
+        >
+
+            <div>
+
+                <label>
+                    Opacidade
+                    <span id="opacityValue">45%</span>
+                </label>
+
+                <input
+                    type="range"
+                    id="watermarkOpacity"
+                    min="5"
+                    max="100"
+                    value="45"
+                >
+
+            </div>
+
+            <div>
+
+                <label>
+                    Tamanho
+                    <span id="sizeValue">4%</span>
+                </label>
+
+                <input
+                    type="range"
+                    id="watermarkSize"
+                    min="1"
+                    max="10"
+                    value="4"
+                >
+
+            </div>
+
+            <div>
+
+                <label>
+                    Ângulo
+                    <span id="angleValue">-25°</span>
+                </label>
+
+                <input
+                    type="range"
+                    id="watermarkAngle"
+                    min="-90"
+                    max="90"
+                    value="-25"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- PREVIEW -->
+
+    <div class="card">
+
+        <h2>4. Pré-visualização</h2>
+
+        <p class="info">
+            Esta é uma pré-visualização real da primeira fotografia.
+            Experimenta alterar a marca de água antes de processar o lote.
+        </p>
+
+        <div class="preview-watermark">
+
+            <div
+                id="previewPlaceholder"
+                class="preview-placeholder"
+            >
+                Seleciona pelo menos uma fotografia
+                para veres a pré-visualização.
+            </div>
+
+            <canvas
+                id="previewCanvas"
+                style="display:none;"
+            ></canvas>
+
+        </div>
+
+    </div>
+
+
+    <!-- PROCESSAMENTO -->
+
+    <div class="card">
+
+        <h2>5. Processar e descarregar</h2>
+
+        <p class="info">
+            O botão abaixo faz todo o processo automaticamente:
+            processa as fotografias, cria as versões com marca de água,
+            cria o ZIP e inicia o download.
+        </p>
+
+        <div class="actions">
+
+            <button
+                class="btn-primary"
+                id="processButton"
+                onclick="processarFotografias()"
+                disabled
+            >
+                Processar fotografias e criar ZIP
+            </button>
+
+            <button
+                class="btn-secondary"
+                onclick="limparTudo()"
+            >
+                Limpar tudo
+            </button>
+
+            <button
+                class="btn-secondary"
+                id="downloadButton"
+                onclick="downloadZIP()"
+                disabled
+            >
+                Descarregar ZIP novamente
+            </button>
+
+        </div>
+
+        <div
+            class="progress-container"
+            id="progressContainer"
+        >
+
+            <div class="progress-bar">
+
+                <div
+                    class="progress"
+                    id="progress"
+                ></div>
+
+            </div>
+
+        </div>
+
+        <div
+            class="status"
+            id="status"
+        >
+            À espera das fotografias.
+        </div>
+
+    </div>
+
+
+    <!-- ESTRUTURA DO ZIP -->
+
+    <div class="card">
+
+        <h2>6. Estrutura do ZIP</h2>
+
+        <pre style="
+            background:#101010;
+            padding:15px;
+            border-radius:8px;
+            color:#bbb;
+            overflow:auto;
+">fotografias_portfolio.zip
+│
+├── ORIGINAIS
+│   ├── 001.jpg
+│   ├── 002.jpg
+│   ├── 003.jpg
+│   └── ...
+│
+└── MARCADAS
+    ├── 001.jpg
+    ├── 002.jpg
+    ├── 003.jpg
+    └── ...</pre>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const STORAGE_KEY =
+    "andre_silva_ultimo_numero";
+
+let fotografias = [];
+
+let fotografiasProcessadas = [];
+
+
+// =====================================================
+// ELEMENTOS
+// =====================================================
+
+const fileInput =
+    document.getElementById("fileInput");
+
+const dropzone =
+    document.getElementById("dropzone");
+
+const photoCount =
+    document.getElementById("photoCount");
+
+const previewList =
+    document.getElementById("previewList");
+
+const processButton =
+    document.getElementById("processButton");
+
+const downloadButton =
+    document.getElementById("downloadButton");
+
+const statusElement =
+    document.getElementById("status");
+
+const previewCanvas =
+    document.getElementById("previewCanvas");
+
+const previewPlaceholder =
+    document.getElementById("previewPlaceholder");
+
+let previewImage = null;
+
+
+// =====================================================
+// NUMERAÇÃO
+// =====================================================
+
+function carregarNumeroGuardado() {
+
+    const valor =
+        localStorage.getItem(STORAGE_KEY);
+
+    if (valor !== null) {
+
+        const numero =
+            parseInt(valor, 10);
+
+        if (!isNaN(numero) && numero >= 0) {
+
+            document.getElementById(
+                "ultimoNumero"
+            ).value = numero;
+
+        }
+    }
+
+    atualizarTudo();
+}
+
+
+function guardarNumeroManual() {
+
+    let numero =
+        parseInt(
+            document.getElementById(
+                "ultimoNumero"
+            ).value,
+            10
+        );
+
+    if (isNaN(numero) || numero < 0) {
+
+        numero = 0;
+
+        document.getElementById(
+            "ultimoNumero"
+        ).value = 0;
+    }
+
+    localStorage.setItem(
+        STORAGE_KEY,
+        String(numero)
+    );
+
+    atualizarTudo();
+}
+
+
+function obterUltimoNumero() {
+
+    let numero =
+        parseInt(
+            document.getElementById(
+                "ultimoNumero"
+            ).value,
+            10
+        );
+
+    if (isNaN(numero) || numero < 0) {
+        numero = 0;
+    }
+
+    return numero;
+}
+
+
+function formatarNumero(numero) {
+
+    const digitos =
+        parseInt(
+            document.getElementById(
+                "digitos"
+            ).value,
+            10
+        );
+
+    return String(numero)
+        .padStart(digitos, "0");
+}
+
+
+function atualizarPreviewNumeracao() {
+
+    const ultimo =
+        obterUltimoNumero();
+
+    const n1 =
+        formatarNumero(ultimo + 1);
+
+    const n2 =
+        formatarNumero(ultimo + 2);
+
+    const n3 =
+        formatarNumero(ultimo + 3);
+
+    document.getElementById(
+        "previewNumeracao"
+    ).innerHTML =
+        `Próximas fotografias:
+        <strong>${n1}.jpg</strong>,
+        <strong>${n2}.jpg</strong>,
+        <strong>${n3}.jpg</strong>`;
+}
+
+
+// =====================================================
+// ATUALIZAÇÃO GERAL
+// =====================================================
+
+function atualizarTudo() {
+
+    atualizarPreviewNumeracao();
+
+    atualizarLista();
+
+    atualizarPreviewMarca();
+}
+
+
+// =====================================================
+// SELEÇÃO DE FOTOGRAFIAS
+// =====================================================
+
+dropzone.addEventListener(
+    "click",
+    () => fileInput.click()
+);
+
+
+fileInput.addEventListener(
+    "change",
+    () => {
+
+        adicionarFotografias(
+            Array.from(fileInput.files)
+        );
+
+        fileInput.value = "";
+
+    }
+);
+
+
+dropzone.addEventListener(
+    "dragover",
+    event => {
+
+        event.preventDefault();
+
+        dropzone.classList.add(
+            "dragover"
+        );
+
+    }
+);
+
+
+dropzone.addEventListener(
+    "dragleave",
+    () => {
+
+        dropzone.classList.remove(
+            "dragover"
+        );
+
+    }
+);
+
+
+dropzone.addEventListener(
+    "drop",
+    event => {
+
+        event.preventDefault();
+
+        dropzone.classList.remove(
+            "dragover"
+        );
+
+        adicionarFotografias(
+            Array.from(
+                event.dataTransfer.files
+            )
+        );
+
+    }
+);
+
+
+function adicionarFotografias(files) {
+
+    const imagens =
+        files.filter(
+            file =>
+                file.type.startsWith("image/")
+        );
+
+    if (imagens.length === 0) {
+
+        alert(
+            "Nenhum ficheiro de imagem válido foi selecionado."
+        );
+
+        return;
+    }
+
+    fotografias.push(
+        ...imagens
+    );
+
+    atualizarTudo();
+}
+
+
+// =====================================================
+// REMOVER FOTO
+// =====================================================
+
+function removerFotografia(index) {
+
+    const foto =
+        fotografias[index];
+
+    if (!foto) {
+        return;
+    }
+
+    const confirmar =
+        confirm(
+            `Queres eliminar esta fotografia da lista?\n\n${foto.name}`
+        );
+
+    if (!confirmar) {
+        return;
+    }
+
+    fotografias.splice(
+        index,
+        1
+    );
+
+    atualizarTudo();
+}
+
+
+// =====================================================
+// LISTA
+// =====================================================
+
+function atualizarLista() {
+
+    photoCount.textContent =
+        fotografias.length;
+
+    previewList.innerHTML = "";
+
+    const ultimo =
+        obterUltimoNumero();
+
+    fotografias.forEach(
+        (file, index) => {
+
+            const numero =
+                formatarNumero(
+                    ultimo + index + 1
+                );
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+            div.className =
+                "photo-item";
+
+
+            const remove =
+                document.createElement(
+                    "button"
+                );
+
+            remove.className =
+                "remove-photo";
+
+            remove.innerHTML =
+                "×";
+
+            remove.title =
+                "Eliminar fotografia";
+
+            remove.onclick =
+                event => {
+
+                    event.stopPropagation();
+
+                    removerFotografia(
+                        index
+                    );
+                };
+
+
+            const img =
+                document.createElement(
+                    "img"
+                );
+
+            img.src =
+                URL.createObjectURL(file);
+
+
+            const info =
+                document.createElement(
+                    "div"
+                );
+
+            info.className =
+                "photo-info";
+
+            info.innerHTML = `
+                <div class="number">
+                    ${numero}
+                </div>
+
+                <div class="filename">
+                    ${escapeHTML(file.name)}
+                </div>
+            `;
+
+
+            div.appendChild(
+                remove
+            );
+
+            div.appendChild(
+                img
+            );
+
+            div.appendChild(
+                info
+            );
+
+            previewList.appendChild(
+                div
+            );
+
+        }
+    );
+
+
+    processButton.disabled =
+        fotografias.length === 0;
+}
+
+
+function escapeHTML(text) {
+
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// =====================================================
+// CONTROLOS DA MARCA
+// =====================================================
+
+document.getElementById(
+    "watermarkText"
+).addEventListener(
+    "input",
+    atualizarPreviewMarca
+);
+
+
+document.getElementById(
+    "watermarkMode"
+).addEventListener(
+    "change",
+    atualizarPreviewMarca
+);
+
+
+document.getElementById(
+    "watermarkOpacity"
+).addEventListener(
+    "input",
+    function() {
+
+        document.getElementById(
+            "opacityValue"
+        ).textContent =
+            this.value + "%";
+
+        atualizarPreviewMarca();
+    }
+);
+
+
+document.getElementById(
+    "watermarkSize"
+).addEventListener(
+    "input",
+    function() {
+
+        document.getElementById(
+            "sizeValue"
+        ).textContent =
+            this.value + "%";
+
+        atualizarPreviewMarca();
+    }
+);
+
+
+document.getElementById(
+    "watermarkAngle"
+).addEventListener(
+    "input",
+    function() {
+
+        document.getElementById(
+            "angleValue"
+        ).textContent =
+            this.value + "°";
+
+        atualizarPreviewMarca();
+    }
+);
+
+
+// =====================================================
+// PREVIEW
+// =====================================================
+
+function atualizarPreviewMarca() {
+
+    if (fotografias.length === 0) {
+
+        previewImage = null;
+
+        previewCanvas.style.display =
+            "none";
+
+        previewPlaceholder.style.display =
+            "flex";
+
+        previewPlaceholder.textContent =
+            "Seleciona pelo menos uma fotografia para veres a pré-visualização.";
+
+        return;
+    }
+
+
+    const file =
+        fotografias[0];
+
+    const url =
+        URL.createObjectURL(file);
+
+    const img =
+        new Image();
+
+
+    img.onload = () => {
+
+        previewImage =
+            img;
+
+        desenharPreview();
+
+        URL.revokeObjectURL(url);
+
+    };
+
+
+    img.onerror = () => {
+
+        URL.revokeObjectURL(url);
+
+    };
+
+
+    img.src =
+        url;
+}
+
+
+function desenharPreview() {
+
+    if (!previewImage) {
+        return;
+    }
+
+    const canvas =
+        previewCanvas;
+
+    const img =
+        previewImage;
+
+
+    canvas.width =
+        img.naturalWidth;
+
+    canvas.height =
+        img.naturalHeight;
+
+
+    const ctx =
+        canvas.getContext("2d");
+
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    ctx.drawImage(
+        img,
+        0,
+        0
+    );
+
+
+    desenharMarca(
+        ctx,
+        canvas,
+        "001"
+    );
+
+
+    previewPlaceholder.style.display =
+        "none";
+
+    canvas.style.display =
+        "block";
+}
+
+
+// =====================================================
+// DESENHAR MARCA
+// =====================================================
+
+function desenharMarca(
+    ctx,
+    canvas,
+    numero
+) {
+
+    const texto =
+        document.getElementById(
+            "watermarkText"
+        ).value.trim();
+
+
+    const opacity =
+        parseInt(
+            document.getElementById(
+                "watermarkOpacity"
+            ).value,
+            10
+        ) / 100;
+
+
+    const tamanho =
+        parseInt(
+            document.getElementById(
+                "watermarkSize"
+            ).value,
+            10
+        );
+
+
+    const angulo =
+        parseInt(
+            document.getElementById(
+                "watermarkAngle"
+            ).value,
+            10
+        );
+
+
+    const modo =
+        document.getElementById(
+            "watermarkMode"
+        ).value;
+
+
+    const fontSize =
+        Math.max(
+            18,
+            canvas.width *
+            (tamanho / 100)
+        );
+
+
+    ctx.save();
+
+    ctx.globalAlpha =
+        opacity;
+
+    ctx.fillStyle =
+        "#ffffff";
+
+    ctx.strokeStyle =
+        "rgba(0,0,0,.35)";
+
+    ctx.lineWidth =
+        Math.max(
+            1,
+            fontSize / 15
+        );
+
+    ctx.font =
+        `bold ${fontSize}px Arial`;
+
+    ctx.textAlign =
+        "center";
+
+    ctx.textBaseline =
+        "middle";
+
+
+    if (
+        modo === "center" ||
+        modo === "diagonal"
+    ) {
+
+        ctx.translate(
+            canvas.width / 2,
+            canvas.height / 2
+        );
+
+        ctx.rotate(
+            angulo *
+            Math.PI /
+            180
+        );
+
+        desenharTexto(
+            ctx,
+            texto,
+            0,
+            0
+        );
+
+    } else {
+
+        const spacingX =
+            canvas.width * .55;
+
+        const spacingY =
+            canvas.height * .30;
+
+
+        for (
+            let y = -canvas.height;
+            y < canvas.height * 2;
+            y += spacingY
+        ) {
+
+            for (
+                let x = -canvas.width;
+                x < canvas.width * 2;
+                x += spacingX
+            ) {
+
+                ctx.save();
+
+                ctx.translate(
+                    x,
+                    y
+                );
+
+                ctx.rotate(
+                    angulo *
+                    Math.PI /
+                    180
+                );
+
+                desenharTexto(
+                    ctx,
+                    texto,
+                    0,
+                    0
+                );
+
+                ctx.restore();
+
+            }
+        }
+    }
+
+
+    ctx.restore();
+
+
+    // Número da fotografia
+    ctx.save();
+
+    ctx.globalAlpha =
+        Math.min(
+            1,
+            opacity + .15
+        );
+
+
+    const numeroSize =
+        Math.max(
+            18,
+            canvas.width * .018
+        );
+
+
+    ctx.font =
+        `bold ${numeroSize}px Arial`;
+
+    ctx.textAlign =
+        "right";
+
+    ctx.textBaseline =
+        "bottom";
+
+
+    const margem =
+        canvas.width * .025;
+
+
+    desenharTexto(
+        ctx,
+        numero,
+        canvas.width - margem,
+        canvas.height - margem
+    );
+
+
+    ctx.restore();
+}
+
+
+function desenharTexto(
+    ctx,
+    texto,
+    x,
+    y
+) {
+
+    ctx.lineJoin =
+        "round";
+
+    ctx.strokeText(
+        texto,
+        x,
+        y
+    );
+
+    ctx.fillText(
+        texto,
+        x,
+        y
+    );
+}
+
+
+// =====================================================
+// PROCESSAR
+// =====================================================
+
+async function processarFotografias() {
+
+    if (fotografias.length === 0) {
+
+        alert(
+            "Seleciona primeiro algumas fotografias."
+        );
+
+        return;
+    }
+
+
+    if (
+        typeof JSZip === "undefined"
+    ) {
+
+        alert(
+            "A biblioteca necessária para criar o ZIP não foi carregada. Verifica a ligação à Internet e volta a abrir o ficheiro."
+        );
+
+        return;
+    }
+
+
+    const ultimo =
+        obterUltimoNumero();
+
+
+    const primeiro =
+        ultimo + 1;
+
+
+    const ultimoNovo =
+        ultimo + fotografias.length;
+
+
+    const confirmar =
+        confirm(
+            `Foram selecionadas ${fotografias.length} fotografias.\n\n` +
+            `A numeração vai começar em ${formatarNumero(primeiro)} ` +
+            `e terminar em ${formatarNumero(ultimoNovo)}.\n\n` +
+            `Continuar?`
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    processButton.disabled =
+        true;
+
+    downloadButton.disabled =
+        true;
+
+
+    fotografiasProcessadas =
+        [];
+
+
+    document.getElementById(
+        "progressContainer"
+    ).style.display =
+        "block";
+
+
+    document.getElementById(
+        "progress"
+    ).style.width =
+        "0%";
+
+
+    try {
+
+        for (
+            let i = 0;
+            i < fotografias.length;
+            i++
+        ) {
+
+            const file =
+                fotografias[i];
+
+
+            const numero =
+                ultimo + i + 1;
+
+
+            const numeroFormatado =
+                formatarNumero(numero);
+
+
+            atualizarStatus(
+                `A processar ${i + 1} de ${fotografias.length}: ${file.name}`
+            );
+
+
+            const resultado =
+                await criarImagemComMarca(
+                    file,
+                    numeroFormatado
+                );
+
+
+            const extensaoOriginal =
+                obterExtensaoOriginal(
+                    file
+                );
+
+
+            const nomeOriginal =
+                `${numeroFormatado}.${extensaoOriginal}`;
+
+
+            const nomeMarcada =
+                `${numeroFormatado}.${resultado.extensao}`;
+
+
+            fotografiasProcessadas.push({
+
+                numero:
+                    numero,
+
+                numeroFormatado:
+                    numeroFormatado,
+
+                original:
+                    file,
+
+                originalNome:
+                    nomeOriginal,
+
+                marcada:
+                    resultado.blob,
+
+                marcadaNome:
+                    nomeMarcada
+
+            });
+
+
+            const percentagem =
+                (
+                    (i + 1) /
+                    fotografias.length
+                ) * 100;
+
+
+            document.getElementById(
+                "progress"
+            ).style.width =
+                percentagem + "%";
+
+
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        0
+                    )
+            );
+        }
+
+
+        // Atualiza a memória do número
+        localStorage.setItem(
+            STORAGE_KEY,
+            String(ultimoNovo)
+        );
+
+
+        document.getElementById(
+            "ultimoNumero"
+        ).value =
+            ultimoNovo;
+
+
+        atualizarPreviewNumeracao();
+
+
+        atualizarStatus(
+            "Fotografias processadas. A criar o ZIP..."
+        );
+
+
+        // CRIA O ZIP AUTOMATICAMENTE
+        await downloadZIP();
+
+
+        atualizarStatus(
+            `Concluído. ${fotografias.length} fotografias foram processadas e o ZIP foi criado. ` +
+            `Último número utilizado: ${formatarNumero(ultimoNovo)}.`
+        );
+
+
+    } catch (erro) {
+
+        console.error(
+            erro
+        );
+
+
+        atualizarStatus(
+            "Ocorreu um erro: " +
+            erro.message
+        );
+
+
+        alert(
+            "Ocorreu um erro durante o processamento:\n\n" +
+            erro.message
+        );
+
+
+    } finally {
+
+        processButton.disabled =
+            false;
+
+    }
+}
+
+
+// =====================================================
+// CRIAR IMAGEM MARCADA
+// =====================================================
+
+function criarImagemComMarca(
+    file,
+    numero
+) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const img =
+                new Image();
+
+
+            const url =
+                URL.createObjectURL(
+                    file
+                );
+
+
+            img.onload = () => {
+
+                try {
+
+                    const canvas =
+                        document.createElement(
+                            "canvas"
+                        );
+
+
+                    canvas.width =
+                        img.naturalWidth;
+
+                    canvas.height =
+                        img.naturalHeight;
+
+
+                    const ctx =
+                        canvas.getContext(
+                            "2d"
+                        );
+
+
+                    ctx.drawImage(
+                        img,
+                        0,
+                        0
+                    );
+
+
+                    desenharMarca(
+                        ctx,
+                        canvas,
+                        numero
+                    );
+
+
+                    const tipo =
+                        obterTipoSaida(
+                            file
+                        );
+
+
+                    canvas.toBlob(
+                        blob => {
+
+                            URL.revokeObjectURL(
+                                url
+                            );
+
+
+                            if (!blob) {
+
+                                reject(
+                                    new Error(
+                                        "Não foi possível criar a imagem marcada."
+                                    )
+                                );
+
+                                return;
+                            }
+
+
+                            resolve({
+
+                                blob:
+
+                                    blob,
+
+                                extensao:
+
+                                    tipo ===
+                                    "image/png"
+
+                                        ? "png"
+
+                                        : tipo ===
+                                          "image/webp"
+
+                                            ? "webp"
+
+                                            : "jpg"
+
+                            });
+
+                        },
+
+                        tipo,
+
+                        tipo ===
+                        "image/png"
+                            ? undefined
+                            : .94
+                    );
+
+
+                } catch (erro) {
+
+                    URL.revokeObjectURL(
+                        url
+                    );
+
+                    reject(
+                        erro
+                    );
+                }
+
+            };
+
+
+            img.onerror = () => {
+
+                URL.revokeObjectURL(
+                    url
+                );
+
+                reject(
+                    new Error(
+                        `Não foi possível abrir a fotografia: ${file.name}`
+                    )
+                );
+
+            };
+
+
+            img.src =
+                url;
+
+        }
+    );
+}
+
+
+// =====================================================
+// EXTENSÕES
+// =====================================================
+
+function obterExtensaoOriginal(
+    file
+) {
+
+    const partes =
+        file.name.split(".");
+
+
+    if (partes.length > 1) {
+
+        let extensao =
+            partes
+                .pop()
+                .toLowerCase()
+                .replace(
+                    /[^a-z0-9]/g,
+                    ""
+                );
+
+
+        if (
+            extensao === "jpeg"
+        ) {
+
+            extensao = "jpg";
+
+        }
+
+
+        if (
+            extensao === "jpg" ||
+            extensao === "png" ||
+            extensao === "webp"
+        ) {
+
+            return extensao;
+
+        }
+    }
+
+
+    if (
+        file.type ===
+        "image/png"
+    ) {
+
+        return "png";
+
+    }
+
+
+    if (
+        file.type ===
+        "image/webp"
+    ) {
+
+        return "webp";
+
+    }
+
+
+    return "jpg";
+}
+
+
+function obterTipoSaida(
+    file
+) {
+
+    if (
+        file.type ===
+        "image/png"
+    ) {
+
+        return "image/png";
+
+    }
+
+
+    if (
+        file.type ===
+        "image/webp"
+    ) {
+
+        return "image/webp";
+
+    }
+
+
+    return "image/jpeg";
+}
+
+
+// =====================================================
+// ZIP
+// =====================================================
+
+async function downloadZIP() {
+
+    if (
+        fotografiasProcessadas.length === 0
+    ) {
+
+        alert(
+            "Não existem fotografias processadas."
+        );
+
+        return;
+    }
+
+
+    if (
+        typeof JSZip === "undefined"
+    ) {
+
+        throw new Error(
+            "A biblioteca JSZip não está disponível."
+        );
+
+    }
+
+
+    downloadButton.disabled =
+        true;
+
+
+    atualizarStatus(
+        "A criar o ZIP..."
+    );
+
+
+    const zip =
+        new JSZip();
+
+
+    const pastaOriginais =
+        zip.folder(
+            "ORIGINAIS"
+        );
+
+
+    const pastaMarcadas =
+        zip.folder(
+            "MARCADAS"
+        );
+
+
+    for (
+        const item
+        of fotografiasProcessadas
+    ) {
+
+        pastaOriginais.file(
+            item.originalNome,
+            item.original
+        );
+
+
+        pastaMarcadas.file(
+            item.marcadaNome,
+            item.marcada
+        );
+
+    }
+
+
+    const conteudo =
+        await zip.generateAsync(
+
+            {
+                type:
+                    "blob",
+
+                compression:
+                    "DEFLATE",
+
+                compressionOptions:
+                    {
+                        level:
+                            6
+                    }
+            },
+
+            metadata => {
+
+                atualizarStatus(
+                    `A criar ZIP: ${Math.round(metadata.percent)}%`
+                );
+
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(
+            conteudo
+        );
+
+
+    const a =
+        document.createElement(
+            "a"
+        );
+
+
+    a.href =
+        url;
+
+
+    a.download =
+        "fotografias_portfolio.zip";
+
+
+    document.body.appendChild(
+        a
+    );
+
+
+    a.click();
+
+
+    a.remove();
+
+
+    setTimeout(
+        () => {
+
+            URL.revokeObjectURL(
+                url
+            );
+
+        },
+        10000
+    );
+
+
+    downloadButton.disabled =
+        false;
+
+}
+
+
+// =====================================================
+// LIMPAR
+// =====================================================
+
+function limparTudo() {
+
+    if (
+        fotografias.length > 0 ||
+        fotografiasProcessadas.length > 0
+    ) {
+
+        const confirmar =
+            confirm(
+                "Queres realmente limpar as fotografias carregadas?"
+            );
+
+
+        if (!confirmar) {
+            return;
+        }
+    }
+
+
+    fotografias =
+        [];
+
+    fotografiasProcessadas =
+        [];
+
+
+    previewList.innerHTML =
+        "";
+
+
+    photoCount.textContent =
+        "0";
+
+
+    processButton.disabled =
+        true;
+
+
+    downloadButton.disabled =
+        true;
+
+
+    document.getElementById(
+        "progress"
+    ).style.width =
+        "0%";
+
+
+    document.getElementById(
+        "progressContainer"
+    ).style.display =
+        "none";
+
+
+    previewImage =
+        null;
+
+
+    previewCanvas.style.display =
+        "none";
+
+
+    previewPlaceholder.style.display =
+        "flex";
+
+
+    previewPlaceholder.textContent =
+        "Seleciona pelo menos uma fotografia para veres a pré-visualização.";
+
+
+    atualizarStatus(
+        "À espera das fotografias."
+    );
+
+}
+
+
+// =====================================================
+// STATUS
+// =====================================================
+
+function atualizarStatus(
+    texto
+) {
+
+    statusElement.textContent =
+        texto;
+}
+
+
+// =====================================================
+// INICIAR
+// =====================================================
+
+carregarNumeroGuardado();
+
+</script>
+
+</body>
+</html>
